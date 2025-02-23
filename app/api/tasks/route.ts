@@ -4,23 +4,34 @@ import { z } from "zod";
 
 const prisma = new PrismaClient();
 
-export async function POST(req: NextRequest){
-    const requiredBody = z.object({
-        userId: z.string(),
-        title: z.string()
-    })
+export async function POST(req: NextRequest) {
+  const requiredBody = z.object({
+    userId: z.string(),
+    title: z.string(),
+  });
 
-    const parsedBody = requiredBody.safeParse(await req.json())
+  const parsedBody = requiredBody.safeParse(await req.json());
 
-    if (!parsedBody.success) {
-        return NextResponse.json({ error: "Missing fields" }, {status: 400});
-    }
+  if (!parsedBody.success) {
+    return NextResponse.json(
+      { error: "Invalid request body", details: parsedBody.error.format() },
+      { status: 400 }
+    );
+  }
 
-    const {userId, title} = parsedBody.data;
+  const { userId, title } = parsedBody.data;
 
-    const tasks = await prisma.task.create({
-        data: {userId, title},
-    })
+  try {
+    const task = await prisma.task.create({
+      data: { userId, title },
+    });
 
-    return NextResponse.json(tasks,{status:201});
+    return NextResponse.json({ task }, { status: 201 });
+  } catch (error: any) {
+    console.error("Server Error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
 }
