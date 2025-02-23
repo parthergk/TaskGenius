@@ -35,3 +35,32 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export async function GET(req: NextRequest) {
+  try {
+    const userId = req.nextUrl.searchParams.get("userId");
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "userId query parameter is required" },
+        { status: 400 }
+      );
+    }
+
+    const tasks = await prisma.task.findMany({
+      where: { userId },
+    });
+
+    if (tasks.length === 0) {
+      return NextResponse.json({ message: "No tasks found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ tasks }, { status: 200 });
+  } catch (error) {
+    console.error("Server Error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
